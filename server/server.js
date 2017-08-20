@@ -6,7 +6,7 @@ const { ObjectID } = require('mongodb');
 var { mongoose } = require('./db/mongoose');
 var { Todo } = require('./models/todo');
 var { User } = require('./models/user');
-var {authenticate} = require('./middleware/authemticate');
+var { authenticate } = require('./middleware/authemticate');
 
 var app = express();
 const port = process.env.PORT || 3000;
@@ -102,10 +102,6 @@ app.patch('/todos/:id', (req, res) => {
     });
 });
 
-app.get('/users/me', authenticate, (req, res) => {
-    res.send(req.user);
-});
-
 app.post('/users', (req, res) => {
     var body = _.pick(req.body, ['email', 'password', 'tokens']);
     var user = new User(body);
@@ -119,6 +115,22 @@ app.post('/users', (req, res) => {
     });
 
     console.log(body);
+});
+
+app.get('/users/me', authenticate, (req, res) => {
+    res.send(req.user);
+});
+
+app.post('/users/login', (req, res) => {
+    var body = _.pick(req.body, ['email', 'password']);
+
+    User.findByCredentials(body.email, body.password).then((user) => {
+        return user.generateAuthToken().then((token) => {
+            res.header('x-auth', token).send(user);
+        });
+    }).catch((e) => {
+        res.status(400).send("Not auth");
+    });
 });
 
 app.listen(port, () => {
