@@ -101,6 +101,32 @@ app.patch('/todos/:id', (req, res) => {
     });
 });
 
+app.get('/users', (req, res) => {
+    User.find().then((user) => {
+
+        return res.send({
+            user
+        });
+    }, (e) => {
+        return res.status(400).send(e);
+    })
+});
+
+app.post('/users', (req, res) => {
+    var body = _.pick(req.body, ['email', 'password', 'tokens']);
+    var user = new User(body);
+
+    user.save().then(() => {
+        return user.generateAuthToken();
+    }).then((token) => {
+        return res.header('x-auth', token).send(user);
+    }).catch((e) => {
+        return res.status(400).send(e);
+    });
+
+    console.log(body);
+});
+
 app.listen(port, () => {
     console.log(`Server listening on port ${port}`);
 });
